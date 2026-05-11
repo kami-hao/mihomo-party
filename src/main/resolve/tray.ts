@@ -41,6 +41,7 @@ import { trayLogger } from '../utils/logger'
 import { floatingWindow, triggerFloatingWindow } from './floatingWindow'
 
 export let tray: Tray | null = null
+let trayMenu: Menu | null = null
 // macOS 流量显示状态，避免异步读取配置导致的时序问题
 let macTrafficIconEnabled = false
 type TrayIconStatus = 'white' | 'blue' | 'green' | 'red'
@@ -399,8 +400,8 @@ export async function createTray(): Promise<void> {
   const { useDockIcon = true, swapTrayClick = false } = await getAppConfig()
   if (process.platform === 'linux') {
     tray = new Tray(pngIcon)
-    const menu = await buildContextMenu()
-    tray.setContextMenu(menu)
+    trayMenu = await buildContextMenu()
+    tray.setContextMenu(trayMenu)
   }
   if (process.platform === 'darwin') {
     const icon = nativeImage.createFromPath(templateIcon).resize({ height: 16 })
@@ -484,10 +485,10 @@ export async function createTray(): Promise<void> {
 }
 
 async function updateTrayMenu(): Promise<void> {
-  const menu = await buildContextMenu()
-  tray?.popUpContextMenu(menu) // 弹出菜单
+  trayMenu = await buildContextMenu()
+  tray?.popUpContextMenu(trayMenu) // 弹出菜单
   if (process.platform === 'linux') {
-    tray?.setContextMenu(menu)
+    tray?.setContextMenu(trayMenu)
   }
 }
 
@@ -540,6 +541,7 @@ export async function closeTrayIcon(): Promise<void> {
     tray.destroy()
   }
   tray = null
+  trayMenu = null
 }
 
 export async function showDockIcon(): Promise<void> {
